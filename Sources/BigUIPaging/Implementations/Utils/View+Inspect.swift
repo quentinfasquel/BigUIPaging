@@ -101,7 +101,7 @@ extension Image {
         guard let location = mirror.children.first(where: { $0.label == "location" }) else {
             return nil
         }
-        guard String(describing: location.value) == "system" else {
+        guard ["system", "privateSystem"].contains(String(describing: location.value)) else {
             return nil
         }
         let name = mirror.children.first(where: { $0.label == "name" })
@@ -114,10 +114,32 @@ extension Image {
     
     func _systemImage() -> UIImage? {
         if let symbol = _systemName() {
-            return UIImage(systemName: symbol)
+            return UIImage(systemName: symbol) ?? UIImage(named: symbol, in: .sfsCoreGlyphs, with: nil)
         } else {
             return nil
         }
     }
 }
 #endif
+
+public func SFSCoreGlyphsBundle() -> Bundle? {
+    guard let bundleClass = NSClassFromString("SFSCoreGlyphsBundle") as AnyObject? else {
+        assertionFailure("Class not found: SFSCoreGlyphsBundle")
+        return nil
+    }
+    guard let bundle = bundleClass.perform(NSSelectorFromString("private"))?.takeUnretainedValue() as? Bundle else {
+        assertionFailure("Bundle not found: SFSCoreGlyphsBundle (private)")
+        return nil
+    }
+    guard bundle.load() else {
+        assertionFailure("Could not load SFSCoreGlyphsBundle (private)")
+        return nil
+    }
+    return bundle
+}
+
+extension Bundle {
+    static var sfsCoreGlyphs: Bundle? {
+        SFSCoreGlyphsBundle()
+    }
+}
